@@ -1,0 +1,16 @@
+.menu {
+    width: 100%;
+
+    & > div > div {
+        display: grid;
+        width: 100%;
+        gap: 1rem;
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (min-width: 52em) {
+        & > div > div {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+}

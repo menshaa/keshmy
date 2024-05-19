@@ -1,0 +1,25 @@
+.members {
+    width: 100%;
+
+    & > div {
+        padding-inline: var(--chakra-space-5);
+    }
+
+    & > div > div {
+        display: flex;
+        width: 100%;
+        gap: 1rem;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+}
+
+.posts {
+    width: 100%;
+
+    & > div > div {
+        display: flex;
+        flex-direction: column;
+        gap: var(--chakra-space-4);
+    }
+}

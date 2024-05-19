@@ -1,0 +1,199 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum JobType {
+  FullTime
+  PartTime
+  Contract
+  Internship
+}
+
+enum PostType {
+  Global
+  Club
+}
+
+model User {
+  id                       String    @id @default(cuid())
+  name                     String
+  surname                  String
+  username                 String    @unique
+  email                    String    @unique
+  password                 String
+  avatarURL                String?
+  approved                 Boolean   @default(false)
+  restricted               Boolean   @default(false)
+  isUnderGrad              Boolean   @default(true)
+  isClubMember             Boolean   @default(false)
+  isAcademicStaff          Boolean   @default(false)
+  isAdmin                  Boolean   @default(false)
+  resetPasswordToken       String?
+  resetPasswordTokenExpiry DateTime?
+  totpSecret               String?   @db.VarChar(64)
+  twoFactorAuth            Boolean   @default(false)
+  createdAt                DateTime  @default(now())
+
+  posts          Post[]
+  messages       Message[]
+  articles       Article[]
+  settings       UserSettings?
+  eventInterests EventInterest[]
+  likes          PostLike[]
+  createdGroups  Group[]
+  joinedGroups   GroupMembers[]
+}
+
+model UserSettings {
+  userId       String  @id
+  showRealName Boolean @default(true)
+  showEmail    Boolean @default(true)
+  allowAllDMs  Boolean @default(true)
+  readReceipts Boolean @default(true)
+  User         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Post {
+  id          String           @id
+  author      User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  content     String?
+  createdAt   DateTime         @default(now())
+  parentId    String?
+  parent      Post?            @relation(name: "comment", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Post[]           @relation(name: "comment")
+  attachments PostAttachment[]
+  type        PostType         @default(Global)
+  likes       PostLike[]
+  group       Group?            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId     String?
+}
+
+model PostLike {
+  userId String
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+}
+
+model PostAttachment {
+  postId String
+  Post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  url    String
+
+  @@id([postId, url])
+}
+
+model Announcement {
+  id          String    @id @default(cuid())
+  approved    Boolean   @default(false)
+  title       String
+  content     String
+  publishDate DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Article {
+  id          String    @id @default(cuid())
+  title       String
+  content     String
+  approved    Boolean   @default(false)
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  publishDate DateTime?
+  createdAt   DateTime  @default(now())
+}
+
+model Event {
+  id          String          @id
+  title       String
+  time        DateTime
+  location    String
+  imageURL    String?
+  description String
+  approved    Boolean         @default(false)
+  createdAt   DateTime        @default(now())
+  interest    EventInterest[]
+}
+
+model EventInterest {
+  eventId String
+  userId  String
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+}
+
+model CafeteriaItem {
+  id        String   @id @default(cuid())
+  name      String
+  price     Int
+  imageURL  String?
+  createdAt DateTime @default(now())
+}
+
+model Job {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  company     String
+  location    String
+  type        JobType
+  salary      Int[]
+  link        String
+  createdAt   DateTime @default(now())
+}
+
+model Conversation {
+  id           String   @id @default(cuid())
+  members      String[] @unique
+  participants String[]
+  lastMessage  String   @default("")
+  updatedAt    DateTime @default(now())
+  createdAt    DateTime @default(now())
+
+  messages Message[]
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  content        String
+  userId         String
+  attachmentURL  String?
+  conversationId String
+  wasRead        Boolean      @default(false)
+  Conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  User           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime     @default(now())
+}
+
+model Group {
+  id           String         @id
+  name         String
+  description  String
+  creator      User           @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  creatorId    String
+  createdAt    DateTime       @default(now())
+  groupMembers GroupMembers[]
+  posts        Post[]
+}
+
+model GroupMembers {
+  id      String @id
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId  String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+}
