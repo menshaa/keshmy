@@ -6,14 +6,18 @@ import {
   HStack,
   VStack,
   Button,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { AxiosError } from "axios";
 import Router from "next/router";
 
+import RejectGroupModal from "src/components/RejectGroupModal";
 import { ReactElement, useState } from "react";
 import toast from "react-hot-toast";
-import { GenericBackendRes } from "src/types/server";
+import { GenericBackendRes, GetMyGroupsRes } from "src/types/server";
 import { axiosAuth } from "src/utils/axios";
+import { KeyedMutator } from "swr";
+import { IUser } from "src/types/interfaces";
 
 interface GrouptProps {
   id: string;
@@ -22,6 +26,9 @@ interface GrouptProps {
   displayJoinButton: boolean;
   isJoinedInitial: boolean;
   approved: boolean;
+  pending: boolean;
+  mutate?: KeyedMutator<GetMyGroupsRes[]>;
+  creator?: IUser | null;
 }
 
 export default function Group({
@@ -31,9 +38,13 @@ export default function Group({
   displayJoinButton,
   isJoinedInitial,
   approved,
+  pending,
+  mutate,
+  creator,
 }: GrouptProps): ReactElement {
   const [isJoined, setIsJoined] = useState(isJoinedInitial);
   const boxBgColor = approved ? "rgb(0, 0, 0)" : "rgb(112,112,112)";
+  const rejectGroupModel = useDisclosure();
 
   const onJoinGroup = (id: string) => {
     if (!approved) {
@@ -41,9 +52,30 @@ export default function Group({
     }
     axiosAuth
       .post<GenericBackendRes>(`groups/${id}/join-group`)
-      .then((res) => {
+      .then(async (res) => {
         toast.success(res.data.message);
         setIsJoined(true);
+
+        // TODO: Try using mutate
+        // await mutate();
+      })
+      .catch((e: AxiosError<GenericBackendRes>) => {
+        toast.error(
+          e.response?.data?.message ??
+            "An error occurred while submitting the event"
+        );
+      });
+  };
+  const onGroupApprovalStatusUpdate = (groupId: string, status: boolean) => {
+    axiosAuth
+      .patch<GenericBackendRes>(`groups/${groupId}/request`, {
+        approved: status,
+      })
+      .then(async (res) => {
+        toast.success(res.data.message);
+        if (mutate) {
+          await mutate();
+        }
       })
       .catch((e: AxiosError<GenericBackendRes>) => {
         toast.error(
@@ -89,12 +121,18 @@ export default function Group({
           <Text fontWeight="semibold" noOfLines={1} fontSize="18px">
             {name}
             <span style={{ paddingLeft: "10px", fontSize: "13px" }}>
-              {!approved ? "(Pending Approval)" : ""}
+              {approved === null ? "(Pending Approval)" : ""}
+              {approved === false ? "(Rejected)" : ""}
             </span>
           </Text>
           <Text fontWeight="" fontSize="14px">
             {description}
           </Text>
+          {creator ? (
+            <Text fontWeight="" fontSize="12px">
+              <b>Creator: </b> {creator.name} {creator.surname}
+            </Text>
+          ) : null}
         </VStack>
         {displayJoinButton ? (
           <Button
@@ -108,6 +146,33 @@ export default function Group({
             {isJoined ? "Joined" : "Join"}
           </Button>
         ) : null}
+        {pending ? (
+          <div>
+            <Button
+              style={{ marginRight: "10px" }}
+              size="sm"
+              colorScheme="button"
+              color={"black"}
+              onClick={() => onGroupApprovalStatusUpdate(id, true)}
+            >
+              Approve
+            </Button>
+            <Button
+              size="sm"
+              colorScheme="button"
+              color={"black"}
+              onClick={rejectGroupModel.onOpen}
+            >
+              Reject
+            </Button>
+          </div>
+        ) : null}
+        <RejectGroupModal
+          isOpen={rejectGroupModel.isOpen}
+          onClose={rejectGroupModel.onClose}
+          mutate={mutate}
+          groupId={id}
+        />
       </HStack>
       <Spacer />
     </Flex>

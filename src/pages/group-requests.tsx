@@ -21,7 +21,7 @@ import styles from "src/styles/Articles.module.scss";
 import Router from "next/router";
 
 const getGroups = () => {
-  return "groups";
+  return "groups/requests";
 };
 
 function GroupsBody(): ReactElement {
@@ -31,6 +31,7 @@ function GroupsBody(): ReactElement {
     isValidating,
     size: page,
     setSize: setPage,
+    mutate,
   } = useSWRInfinite(getGroups, fetcher<GetMyGroupsRes>, {
     revalidateOnFocus: false,
   });
@@ -86,7 +87,7 @@ function GroupsBody(): ReactElement {
           alt="List is empty graphic"
         />
         <Text fontSize="3xl" fontWeight="bold">
-          No available groups at the moment
+          No group requests at the moment
         </Text>
       </VStack>
     );
@@ -107,9 +108,12 @@ function GroupsBody(): ReactElement {
           id={group.id}
           name={group.name}
           description={group.description ?? ""}
-          displayJoinButton={true}
-          isJoinedInitial={group.isJoined}
+          creator={group.creator ?? null}
+          displayJoinButton={false}
+          isJoinedInitial={false}
           approved={group.approved}
+          pending={true}
+          mutate={mutate}
         />
       )}
     />
@@ -122,7 +126,7 @@ export default function Groups(): ReactElement {
       <VStack spacing={4} align="start" flex="7">
         <Button onClick={() => Router.back()}>Back</Button>
         <Text fontSize="xl" fontWeight="semibold">
-          Available Groups
+          Group Requests
         </Text>
         <GroupsBody />
       </VStack>

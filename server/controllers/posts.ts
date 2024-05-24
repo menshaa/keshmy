@@ -26,7 +26,7 @@ import { GetPagedData } from "../validators/general";
 import fs from "fs/promises";
 import { snowflake } from "../database/snowflake";
 import { traversalSafeRm } from "../utils";
-import { getGroupMemberRecordDB } from "server/database/groups";
+import { getGroupMemberRecordDB } from "../database/groups";
 
 export async function getUserPosts(req: Request, res: Response) {
   const data = GetPostsData.safeParse(req.params);
@@ -227,12 +227,10 @@ export async function getGroupPostRequests(req: Request, res: Response) {
 
   const postRequests = await getPostRequestsDB(groupId, Number(page));
 
-  return res
-    .status(200)
-    .json({
-      message: "Successfully fetched group post requests",
-      postRequests,
-    });
+  return res.status(200).json({
+    message: "Successfully fetched group post requests",
+    postRequests,
+  });
 }
 
 export async function updateGroupPostStatus(req: Request, res: Response) {

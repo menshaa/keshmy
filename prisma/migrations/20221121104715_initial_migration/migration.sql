@@ -44,7 +44,8 @@ CREATE TABLE "Post" (
     "groupId" TEXT NULL,
     "content" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
+    "approved" BOOLEAN NULL,
+    "rejectReason" TEXT NULL,
     CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
 );
 
@@ -160,6 +161,8 @@ CREATE TABLE "Group" (
     "description" TEXT NULL,
     "creatorId" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "approved" BOOLEAN NULL,
+    "rejectReason" TEXT NULL,
 
     CONSTRAINT "Group_pkey" PRIMARY KEY ("id")
 );
@@ -168,7 +171,8 @@ CREATE TABLE "GroupMembers" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "groupId" TEXT NOT NULL,
-
+    "isAdmin" BOOLEAN NOT NULL DEFAULT false,
+    "approved" BOOLEAN NULL,
     CONSTRAINT "GroupMembers_pkey" PRIMARY KEY ("id")
 );
 

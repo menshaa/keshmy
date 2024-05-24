@@ -38,6 +38,7 @@ export interface IClubMember {
   name: string;
   username: string;
   avatarURL: string | null;
+  isGroupAdmin?: boolean;
 }
 
 export interface IEvent {
@@ -189,4 +190,5 @@ export interface IGroup {
   description: string;
   isJoined: boolean;
   approved: boolean;
+  creator?: IUser;
 }

@@ -1,5 +1,6 @@
 import { prisma } from "../server/database/client";
 import { articles } from "./articleData";
+import * as bcrypt from "bcrypt";
 
 const run = async () => {
   await prepareDb();
@@ -33,8 +34,11 @@ run()
   });
 
 async function prepareDb() {
-  const user = await prisma.user.findUnique({ where: { id: "1" } });
-  if (!user) {
+  const adminUser = await prisma.user.findUnique({ where: { id: "1" } });
+  const testUser = await prisma.user.findUnique({ where: { id: "2" } });
+  const hashAdminUser = await bcrypt.hash("admin_user", 10);
+  const hashTestUser = await bcrypt.hash("test_user", 10);
+  if (!adminUser) {
     await prisma.user.create({
       data: {
         id: "1",
@@ -42,9 +46,23 @@ async function prepareDb() {
         surname: "User",
         username: "admin_user",
         email: "admin_user@gmail.com",
-        password: "admin_user",
+        password: hashAdminUser,
         approved: true,
         isAdmin: true,
+      },
+    });
+  }
+  if (!testUser) {
+    await prisma.user.create({
+      data: {
+        id: "2",
+        name: "Test",
+        surname: "User",
+        username: "test_user",
+        email: "test_user@gmail.com",
+        password: hashTestUser,
+        approved: true,
+        isAdmin: false,
       },
     });
   }

@@ -508,6 +508,7 @@ export default function ConversationArea({
                     userId: user?.id,
                     recipientId: convo.recipientId,
                 };
+                
                 socket?.emit("markMessagesAsRead", payload);
             }
 

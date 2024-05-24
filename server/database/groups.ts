@@ -29,6 +29,9 @@ export const getGroupByIdDB = async (id: string) => {
     where: {
       id,
     },
+    include: {
+      creator: true,
+    },
   });
 };
 
@@ -71,6 +74,9 @@ export const getGroupsDB = async (userId: string) => {
       },
       approved: true,
     },
+    include: {
+      creator: true,
+    },
   });
 
   return availableGroups.map((availableGroup: any) => {
@@ -90,9 +96,6 @@ export const getMyGroupsDB = async (userId: string) => {
       group: true,
     },
   });
-
-  if (joinedGroups.length) {
-  }
 
   const ownedGroups = await prisma.group.findMany({
     where: {
@@ -120,6 +123,9 @@ export const getGroupDB = async (groupId: string) => {
     where: {
       id: groupId,
     },
+    include: {
+      creator: true,
+    },
   });
 };
 
@@ -127,6 +133,9 @@ export const getPendingGroupsDB = async () => {
   return prisma.group.findMany({
     where: {
       approved: null,
+    },
+    include: {
+      creator: true,
     },
   });
 };
@@ -141,8 +150,8 @@ export const updateGroupDB = async (groupId: string, updatedPayload: any) => {
 };
 
 export const getGroupMemberRecordDB = async (
-  userId: string,
-  groupId: string
+  groupId: string,
+  userId: string
 ) => {
   return prisma.groupMembers.findFirst({
     where: {
@@ -161,5 +170,23 @@ export const updateGroupMemberDB = async (
       id: groupMemberId,
     },
     data: updatedPayload,
+  });
+};
+
+export const getGroupMembersDB = async (
+  groupId: string,
+  page: number,
+  approvedStatus: boolean | undefined
+) => {
+  return prisma.groupMembers.findMany({
+    where: {
+      groupId,
+      // approved: approvedStatus,
+    },
+    take: 30,
+    skip: page * 30,
+    include: {
+      user: true,
+    },
   });
 };

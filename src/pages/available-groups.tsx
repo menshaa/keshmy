@@ -107,9 +107,11 @@ function GroupsBody(): ReactElement {
           id={group.id}
           name={group.name}
           description={group.description ?? ""}
+          creator={group.creator ?? null}
           displayJoinButton={true}
           isJoinedInitial={group.isJoined}
           approved={group.approved}
+          pending={false}
         />
       )}
     />

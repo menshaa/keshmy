@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import {
   CreateGroupData,
+  GetGroupMembersData,
   PatchGroupRequestData,
   PatchUserAdminStatusData,
 } from "../validators/groups";
@@ -16,6 +17,7 @@ import {
   updateGroupDB,
   updateGroupMemberDB,
   getGroupMemberRecordDB,
+  getGroupMembersDB,
 } from "../database/groups";
 import { DatabaseError } from "../database/utils";
 
@@ -121,18 +123,22 @@ export async function updateUserAdminStatus(req: Request, res: Response) {
       .json({ message: "Group creators cannot be demoted" });
   }
 
-  const groupMemberRecordForLoggedInUser = await getGroupMemberRecordDB(
-    groupId,
-    loggedInUserId
-  );
-  if (!groupMemberRecordForLoggedInUser) {
-    return res.status(404).json({ message: "Group member record not found." });
-  }
+  if (targetGroup.creatorId !== loggedInUserId) {
+    const groupMemberRecordForLoggedInUser = await getGroupMemberRecordDB(
+      groupId,
+      loggedInUserId
+    );
+    if (!groupMemberRecordForLoggedInUser) {
+      return res
+        .status(404)
+        .json({ message: "Group member record not found." });
+    }
 
-  if (!groupMemberRecordForLoggedInUser.isAdmin) {
-    return res
-      .status(400)
-      .json({ message: "Only group admins can update admin statuses" });
+    if (!groupMemberRecordForLoggedInUser.isAdmin) {
+      return res
+        .status(400)
+        .json({ message: "Only group admins can update admin statuses" });
+    }
   }
 
   const groupMemberRecordForTargetUser = await getGroupMemberRecordDB(
@@ -150,4 +156,96 @@ export async function updateUserAdminStatus(req: Request, res: Response) {
   return res
     .status(201)
     .json({ message: "Successfully updated user admin status" });
+}
+
+export async function getGroupPendingMembers(req: Request, res: Response) {
+  const response = GetGroupMembersData.safeParse(req.params);
+  const { page } = req.query;
+
+  if (!response.success) {
+    return res.status(400).json({ message: response.error.errors[0].message });
+  }
+
+  const { groupId } = response.data;
+
+  const approvedStatus = undefined;
+  const members = await getGroupMembersDB(
+    groupId,
+    Number(page),
+    approvedStatus
+  );
+  return res
+    .status(200)
+    .json({ message: "Successfully fetched groups", members });
+}
+
+export async function getGroupMembers(req: Request, res: Response) {
+  const response = GetGroupMembersData.safeParse(req.params);
+  const { page } = req.query;
+
+  if (!response.success) {
+    return res.status(400).json({ message: response.error.errors[0].message });
+  }
+
+  const { groupId } = response.data;
+
+  const approvedStatus = true;
+  const groupMemberRecords: any = await getGroupMembersDB(
+    groupId,
+    Number(page),
+    approvedStatus
+  );
+
+  const members = groupMemberRecords.map((record: any) => {
+    return {
+      ...record.user,
+      isGroupAdmin: record.isAdmin,
+    };
+  });
+
+  const group = await getGroupByIdDB(groupId);
+  if (!group) {
+    return res.status(404).json({ message: "Group not found." });
+  }
+  members.unshift(group.creator);
+
+  return res.status(200).json({
+    message: "Successfully fetched members",
+    members: members.map((m: any) => {
+      return {
+        id: m.id,
+        username: m.username,
+        avatarURL: m.avatarURL,
+        name: m.name,
+        isGroupAdmin: group.creatorId === m.id || m.isGroupAdmin === true,
+      };
+    }),
+  });
+}
+
+export async function updateUserJoinRequest(req: Request, res: Response) {
+  const loggedInUserId = req.session.user.id;
+  const { groupId, userId } = req.params;
+  const groupMemberRecordForLoggedInUser = await getGroupMemberRecordDB(
+    groupId,
+    loggedInUserId
+  );
+  if (!groupMemberRecordForLoggedInUser) {
+    return res.status(404).json({ message: "Group member record not found." });
+  }
+
+  if (!groupMemberRecordForLoggedInUser.isAdmin) {
+    return res
+      .status(400)
+      .json({ message: "Only group admins can approve/reject users" });
+  }
+
+  const groupMemberRecord = await getGroupMemberRecordDB(userId, groupId);
+  if (!groupMemberRecord) {
+    return res.status(404).json({ message: "Group member record not found." });
+  }
+  await updateGroupMemberDB(groupMemberRecord.id, { approved: true });
+  return res
+    .status(201)
+    .json({ message: "Successfully updated user group request" });
 }

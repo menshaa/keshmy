@@ -97,6 +97,7 @@ export const queryPostsByGroupId = async (
     ON p."groupId" = g.id
     WHERE p.type::text = ${type}
     AND p."groupId" = ${groupId}
+    AND p."approved" IS NOT null
     GROUP BY p.id, u.id, us."showRealName", parent_author.username, g."name"
     ORDER BY p."createdAt" DESC
     LIMIT 30 OFFSET ${page * 30}

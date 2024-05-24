@@ -195,10 +195,11 @@ model Group {
 }
 
 model GroupMembers {
-  id      String @id
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId  String
-  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId String
-  isAdmin Boolean @default(false)
+  id       String @id
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  group    Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId  String
+  approved Boolean?
+  isAdmin  Boolean @default(false)
 }
