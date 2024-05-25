@@ -31,3 +31,10 @@
 Email: admin_user@gmail.com
 Password: admin_user
 ```
+
+- Or login as an a normal user using these credentials
+
+```
+Email: test_user@gmail.com
+Password: test_user
+```
