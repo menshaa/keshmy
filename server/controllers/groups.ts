@@ -18,6 +18,7 @@ import {
   updateGroupMemberDB,
   getGroupMemberRecordDB,
   getGroupMembersDB,
+  getGroupAdmins,
 } from "../database/groups";
 import { DatabaseError } from "../database/utils";
 
@@ -73,7 +74,10 @@ export async function getMyGroups(req: Request, res: Response) {
 export async function getGroup(req: Request, res: Response) {
   const groupId = req.params.groupId;
   const group = await getGroupDB(groupId);
-  return res.status(200).json({ message: "Successfully fetched group", group });
+  const admins = await getGroupAdmins(groupId);
+  return res
+    .status(200)
+    .json({ message: "Successfully fetched group", data: { group, admins } });
 }
 
 export async function getGroupRequests(req: Request, res: Response) {

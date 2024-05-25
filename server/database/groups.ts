@@ -190,3 +190,20 @@ export const getGroupMembersDB = async (
     },
   });
 };
+
+export const getGroupAdmins = async (groupId: string) => {
+  const adminMembers = await prisma.groupMembers.findMany({
+    where: {
+      groupId,
+      isAdmin: true,
+    },
+  });
+
+  const group = await prisma.group.findFirst({
+    where: {
+      id: groupId,
+    },
+  });
+
+  return [...adminMembers.map((member) => member.userId), group?.creatorId];
+};

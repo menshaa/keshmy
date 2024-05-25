@@ -151,6 +151,7 @@ export interface IPost {
   type: PostType;
   createdAt: string;
   groupName: string | null;
+  author?: IUser
 }
 
 export interface IPostAuthor {

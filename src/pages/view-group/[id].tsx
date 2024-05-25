@@ -346,6 +346,7 @@ export default function ViewGroup(): ReactElement {
   const router = useRouter();
   const { id } = router.query;
   const [group, setGroup] = useState<IGroup | null>(null);
+  const [groupAdmins, setGroupAdmins] = useState<string[]>([]);
   const getPosts = (pageIndex: number) => {
     return `posts/get-all-posts/${pageIndex}?groupId=${id}`;
   };
@@ -364,7 +365,8 @@ export default function ViewGroup(): ReactElement {
       axiosAuth
         .get<GetGroupRes>(`groups/${id}`)
         .then((res) => {
-          setGroup(res.data.group);
+          setGroup(res.data.data.group);
+          setGroupAdmins(res.data.data.admins);
         })
         .catch((error) => {
           toast.error(
@@ -378,7 +380,15 @@ export default function ViewGroup(): ReactElement {
   return (
     <Flex gap="10">
       <VStack spacing={4} align="start" flex="7">
-        <Button onClick={() => router.back()}>Back</Button>
+        <HStack>
+          <Button onClick={() => router.back()}>Back</Button>
+          {groupAdmins.includes(loggedInUser?.id) ? (
+            <Button onClick={() => router.push(`/group-post-requests/${id}`)}>
+              Post Requests
+            </Button>
+          ) : null}
+        </HStack>
+
         <Text fontSize="xl" fontWeight="semibold">
           Group Name: {group?.name}
         </Text>

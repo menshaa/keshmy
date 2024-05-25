@@ -172,7 +172,8 @@ export const createPostDB = async (
   attachmentsURLs: string[],
   parentId: string | undefined,
   type: PostType = "Global",
-  groupId: string | undefined
+  groupId: string | undefined,
+  approved: boolean | undefined
 ): Promise<DatabaseError> => {
   try {
     await prisma.$transaction(async (tx) => {
@@ -181,9 +182,10 @@ export const createPostDB = async (
           id,
           content,
           authorId: userId,
-          parentId,
+          ...(parentId ? { parentId, approved: true } : {}),
           type,
           ...(groupId ? { groupId } : {}),
+          ...(approved ? { approved } : {}),
         },
       });
 
@@ -292,5 +294,8 @@ export const getPostRequestsDB = async (groupId: string, page: number) => {
     },
     take: 30,
     skip: page * 30,
+    include: {
+      author: true,
+    },
   });
 };

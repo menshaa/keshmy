@@ -26,7 +26,7 @@ import { GetPagedData } from "../validators/general";
 import fs from "fs/promises";
 import { snowflake } from "../database/snowflake";
 import { traversalSafeRm } from "../utils";
-import { getGroupMemberRecordDB } from "../database/groups";
+import { getGroupByIdDB, getGroupMemberRecordDB } from "../database/groups";
 
 export async function getUserPosts(req: Request, res: Response) {
   const data = GetPostsData.safeParse(req.params);
@@ -133,6 +133,34 @@ export async function createPost(req: Request, res: Response) {
     counter++;
   }
 
+  /**
+   * The following logic ensures that group admins' posts will immediately be approved
+   */
+  let approved = undefined;
+  if (groupId) {
+    const targetGroup = await getGroupByIdDB(groupId.toString());
+    if (!targetGroup) {
+      return res.status(404).json({ message: "Group not found" });
+    }
+    if (targetGroup.creatorId !== req.session.user.id) {
+      const targetGroupMemberRecord = await getGroupMemberRecordDB(
+        groupId.toString(),
+        req.session.user.id
+      );
+      if (!targetGroupMemberRecord) {
+        return res
+          .status(404)
+          .json({ message: "Group member record not found" });
+      }
+
+      if (targetGroupMemberRecord.isAdmin) {
+        approved = true;
+      }
+    } else {
+      approved = true;
+    }
+  }
+
   const error = await createPostDB(
     id.toString(),
     req.session.user.id,
@@ -140,7 +168,8 @@ export async function createPost(req: Request, res: Response) {
     attachmentsURLs,
     data.data.parentId,
     data.data.type,
-    groupId?.toString()
+    groupId?.toString(),
+    approved
   );
 
   if (error === DatabaseError.UNKNOWN) {
@@ -229,7 +258,7 @@ export async function getGroupPostRequests(req: Request, res: Response) {
 
   return res.status(200).json({
     message: "Successfully fetched group post requests",
-    postRequests,
+    posts: postRequests,
   });
 }
 
@@ -252,19 +281,26 @@ export async function updateGroupPostStatus(req: Request, res: Response) {
       .status(400)
       .json({ message: "Please provide a rejection reason" });
   }
-
-  const groupMemberRecordForLoggedInUser = await getGroupMemberRecordDB(
-    targetPost?.groupId,
-    loggedInUserId
-  );
-  if (!groupMemberRecordForLoggedInUser) {
-    return res.status(404).json({ message: "Group member record not found." });
+  const targetGroup = await getGroupByIdDB(targetPost.groupId);
+  if (!targetGroup) {
+    return res.status(404).json({ message: "Group not found." });
   }
+  if (targetGroup.creatorId !== loggedInUserId) {
+    const groupMemberRecordForLoggedInUser = await getGroupMemberRecordDB(
+      targetPost.groupId,
+      loggedInUserId
+    );
+    if (!groupMemberRecordForLoggedInUser) {
+      return res
+        .status(404)
+        .json({ message: "Group member record not found." });
+    }
 
-  if (!groupMemberRecordForLoggedInUser.isAdmin) {
-    return res
-      .status(400)
-      .json({ message: "Only group admins can update post statuses" });
+    if (!groupMemberRecordForLoggedInUser.isAdmin) {
+      return res
+        .status(400)
+        .json({ message: "Only group admins can update post statuses" });
+    }
   }
 
   await updatePostDB(postId, response.data);
