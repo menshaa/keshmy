@@ -35,3 +35,8 @@ Password: test_user
 - Add changes to `schema.prisma`
 - Run `npx prisma generate`
 - Re-run migrations
+
+## Testing
+
+- To run existing tests, run `npm run test` or `npm test`
+- To add more tests, create test files under `__tests__` folder
