@@ -1,13 +1,3 @@
-# ITEC404 Project - Team 4
-
-### Team Members
-
-- Aya Adel Mohamed Basher
-- Abdulla F.A. Omar
-- Habab Tarig Mohamed
-- Hisham Husayn Alsadiq Aburaqibah
-- Nasr Taher Nasr Swie
-
 ## Prerequisites
 
 - NodeJs
