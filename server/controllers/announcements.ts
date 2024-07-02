@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   addAnnouncementDB,
   deleteAnnouncementById,
+  editAnnouncementById,
   getAnnouncementById,
   queryAnnouncements,
 } from "../database/announcements";
@@ -112,4 +113,23 @@ export async function deleteAnnouncement(req: Request, res: Response) {
   }
 
   return res.status(200).json({ message: "Successfully deleted announcement" });
+}
+
+export async function editAnnouncement(req: Request, res: Response) {
+  const data = GetDataById.safeParse(req.params);
+  const payload = req.body;
+
+  if (!data.success) {
+    return res.status(400).json({ message: data.error.errors[0].message });
+  }
+
+  const error = await editAnnouncementById(data.data.id, payload);
+
+  if (error === DatabaseError.UNKNOWN) {
+    return res
+      .status(500)
+      .json({ message: "An internal error occurred while editing this announcement" });
+  }
+
+  return res.status(200).json({ message: "Successfully updated announcement" });
 }

@@ -22,14 +22,17 @@ import { AxiosError } from "axios";
 import { axiosAuth } from "src/utils/axios";
 import { Dialog } from "src/components/Dialog";
 import { useUserContext } from "src/contexts/userContext";
+import EditAnnouncementModal from "./EditAnnouncementModal";
+import { PencilIcon } from "@heroicons/react/outline";
 
 interface AnnouncementProps {
   id: string;
   title: string;
   description: string;
   date: string;
-  imageURL: string;
+  imageURL?: string;
   deleteAnnouncementCB: () => Promise<void>;
+  mutate?: any;
 }
 
 interface DeleteDialogProps {
@@ -75,6 +78,22 @@ function DeleteDialog({
   );
 }
 
+function EditDialog({
+  mutate,
+  announcement,
+  isOpen,
+  onClose,
+}: any): ReactElement {
+  return (
+    <EditAnnouncementModal
+      mutate={mutate}
+      announcement={announcement}
+      isOpen={isOpen}
+      onClose={onClose}
+    />
+  );
+}
+
 export default function Announcement({
   id,
   title,
@@ -82,8 +101,14 @@ export default function Announcement({
   date,
   imageURL,
   deleteAnnouncementCB,
+  mutate,
 }: AnnouncementProps): ReactElement {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const {
+    isOpen: isEditOpen,
+    onOpen: onEditOpen,
+    onClose: onEditClose,
+  } = useDisclosure();
   const { user } = useUserContext();
 
   return (
@@ -109,6 +134,10 @@ export default function Announcement({
               {user?.isAdmin ? (
                 <OptionsMenu>
                   <MenuList>
+                    <MenuItem onClick={onEditOpen}>
+                      <Icon mr={3} as={PencilIcon} h="24px" w="24px" />
+                      <span>Edit Announcement</span>
+                    </MenuItem>
                     <MenuItem color="red.500" onClick={onOpen}>
                       <Icon mr={3} as={TrashIcon} h="24px" w="24px" />
                       <span>Delete Announcement</span>
@@ -136,6 +165,12 @@ export default function Announcement({
         isOpen={isOpen}
         onClose={onClose}
         deleteAnnouncementCB={deleteAnnouncementCB}
+      />
+      <EditDialog
+        mutate={mutate}
+        announcement={{ id, title, content: description }}
+        isOpen={isEditOpen}
+        onClose={onEditClose}
       />
     </>
   );

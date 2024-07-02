@@ -142,6 +142,7 @@ function JobsBody({ swr }: JobsBodyProps): ReactElement {
                     datePosted={job.createdAt}
                     link={job.link}
                     deleteJobCB={deleteJobCB}
+                    mutate={mutate}
                 />
             )}
         />

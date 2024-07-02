@@ -70,3 +70,17 @@ export const deleteAnnouncementById = async (
 
   return DatabaseError.SUCCESS;
 };
+
+export const editAnnouncementById = async (
+  id: string,
+  payload: any
+): Promise<DatabaseError> => {
+  try {
+    await prisma.announcement.update({ where: { id }, data: payload });
+  } catch (e) {
+    console.error(e);
+    return DatabaseError.UNKNOWN;
+  }
+
+  return DatabaseError.SUCCESS;
+};
