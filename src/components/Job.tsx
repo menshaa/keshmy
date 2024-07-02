@@ -184,7 +184,7 @@ export default function Job(props: JobProps): ReactElement {
               {props.company}
             </Text>
           </VStack>
-          {user?.isAdmin ? (
+          {user?.isAdmin || user?.isAcademicStaff ? (
             <OptionsMenu>
               <MenuList>
                 <MenuItem color="" onClick={onEditOpen}>

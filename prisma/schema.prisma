@@ -36,6 +36,7 @@ model User {
   isUnderGrad              Boolean   @default(true)
   isClubMember             Boolean   @default(false)
   isAcademicStaff          Boolean   @default(false)
+  isCafeteriaMan           Boolean   @default(false)
   isAdmin                  Boolean   @default(false)
   resetPasswordToken       String?
   resetPasswordTokenExpiry DateTime?
@@ -205,7 +206,6 @@ model GroupMembers {
   groupId  String
   approved Boolean?
   isAdmin  Boolean @default(false)
-  @@unique([userId, groupId])
 }
 
 model GroupWhiteList {
@@ -214,5 +214,4 @@ model GroupWhiteList {
   userId   String
   group    Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId  String
-  @@unique([userId, groupId])
 }

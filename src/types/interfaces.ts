@@ -19,10 +19,12 @@ export interface IUser {
   twoFactorAuth: boolean;
   isAdmin: boolean;
   isAcademicStaff?: boolean;
+  isCafeteriaMan?: boolean;
   isUnderGrad?: boolean;
   isClubMember?: boolean;
   approved?: boolean;
   restricted?: boolean;
+  type?: string;
 }
 
 export interface ISearchUser {

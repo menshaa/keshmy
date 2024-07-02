@@ -202,7 +202,7 @@ export default function Event({
             ) : null}
           </Flex>
         </VStack>
-        {user?.isAdmin ? (
+        {user?.isAdmin || user?.isAcademicStaff ? (
           <OptionsMenu>
             <MenuList>
               <MenuItem onClick={onEditOpen}>

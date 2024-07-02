@@ -133,7 +133,7 @@ export default function Announcements(): ReactElement {
   return (
     <Flex gap="10">
       <VStack align="start" flex="7">
-        {user?.isAdmin || user?.isAcademicStaff ? (
+        {user?.isAdmin || user?.isAcademicStaff || user?.isCafeteriaMan ? (
           <VStack width="full" align="start" spacing={5}>
             <VStack width="full" align="start" spacing={5}>
               <Text fontSize="18px" fontWeight="semibold">

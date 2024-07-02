@@ -131,7 +131,7 @@ export default function Announcement({
                   </LinkOverlay>
                 </NextLink>
               </Tooltip>
-              {user?.isAdmin ? (
+              {user?.isAdmin || user?.isAcademicStaff ? (
                 <OptionsMenu>
                   <MenuList>
                     <MenuItem onClick={onEditOpen}>

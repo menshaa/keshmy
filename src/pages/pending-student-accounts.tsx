@@ -14,6 +14,7 @@ import {
   Spinner,
   HStack,
   Wrap,
+  Icon,
 } from "@chakra-ui/react";
 import { CheckSquare, XSquare } from "phosphor-react";
 import { ReactElement, useEffect, useState } from "react";
@@ -26,8 +27,9 @@ import { AdminAccountsRes } from "src/types/server";
 import toast from "react-hot-toast";
 import { fetcher } from "src/utils/helpers";
 import Router from "next/router";
+import { ArrowLeftIcon } from "@chakra-ui/icons";
 
-export default function Accounts(): ReactElement {
+export default function PendingStudentAccounts(): ReactElement {
   const [page, setPage] = useState(0);
   const [accountCount, setAccountCount] = useState(0);
   const [accounts, setAccounts] = useState<(IUser & { selected: boolean })[]>(
@@ -35,7 +37,7 @@ export default function Accounts(): ReactElement {
   );
 
   const { data, mutate, error, isValidating } = useSWR(
-    `admin/get-all-users?page=${page}`,
+    `admin/get-all-pending-students?page=${page}`,
     fetcher<AdminAccountsRes>,
     {
       revalidateOnFocus: false,
@@ -48,30 +50,11 @@ export default function Accounts(): ReactElement {
   const anyChecked = accounts.length ? accounts.some((a) => a.selected) : false;
   const isIndeterminate = anyChecked && !allChecked;
   const pages = Math.ceil(accountCount / 25);
+
   const {
-    isOpen: isAdminOpen,
-    onOpen: onAdminOpen,
-    onClose: onAdminClose,
-  } = useDisclosure();
-  const {
-    isOpen: isRemoveAdminOpen,
-    onOpen: onRemoveAdminOpen,
-    onClose: onRemoveAdminClose,
-  } = useDisclosure();
-  const {
-    isOpen: isUnrestrictOpen,
-    onOpen: onUnrestrictOpen,
-    onClose: onUnrestrictClose,
-  } = useDisclosure();
-  const {
-    isOpen: isRestrictOpen,
-    onOpen: onRestrictOpen,
-    onClose: onRestrictClose,
-  } = useDisclosure();
-  const {
-    isOpen: isDeleteOpen,
-    onOpen: onDeleteOpen,
-    onClose: onDeleteClose,
+    isOpen: isApproveOpen,
+    onOpen: onApproveOpen,
+    onClose: onApproveClose,
   } = useDisclosure();
 
   const maxTableHeight = {
@@ -79,17 +62,17 @@ export default function Accounts(): ReactElement {
     md: "calc(100vh - var(--chakra-headerHeight-desktop) - 220px)",
   };
 
-  const handleAddAdmin = async () => {
+  const handleApprove = async () => {
     const ids = accounts.reduce((prev, curr) => {
       if (curr.selected) prev.push(curr.id);
       return prev;
     }, [] as string[]);
 
     try {
-      await mutate(axiosAuth.patch("admin/add-admin", { ids }), {
+      await mutate(axiosAuth.patch("admin/approve-users", { ids }), {
         optimisticData: {
           accounts: accounts.map((a) =>
-            ids.includes(a.id) ? { ...a, restricted: false } : a
+            ids.includes(a.id) ? { ...a, approved: true } : a
           ),
           accountCount: accountCount,
         },
@@ -98,100 +81,7 @@ export default function Accounts(): ReactElement {
         rollbackOnError: true,
       });
     } catch (e) {
-      toast.error("An error occurred while add admin the accounts");
-    }
-  };
-  const handleRemoveAdmin = async () => {
-    const ids = accounts.reduce((prev, curr) => {
-      if (curr.selected) prev.push(curr.id);
-      return prev;
-    }, [] as string[]);
-
-    try {
-      await mutate(axiosAuth.patch("admin/remove-admin", { ids }), {
-        optimisticData: {
-          accounts: accounts.map((a) =>
-            ids.includes(a.id) ? { ...a, restricted: false } : a
-          ),
-          accountCount: accountCount,
-        },
-        populateCache: false,
-        revalidate: false,
-        rollbackOnError: true,
-      });
-    } catch (e) {
-      toast.error("An error occurred while remove admin the accounts");
-    }
-  };
-  const handleUnrestrict = async () => {
-    const ids = accounts.reduce((prev, curr) => {
-      if (curr.selected) prev.push(curr.id);
-      return prev;
-    }, [] as string[]);
-
-    try {
-      await mutate(axiosAuth.patch("admin/unrestrict-users", { ids }), {
-        optimisticData: {
-          accounts: accounts.map((a) =>
-            ids.includes(a.id) ? { ...a, restricted: false } : a
-          ),
-          accountCount: accountCount,
-        },
-        populateCache: false,
-        revalidate: false,
-        rollbackOnError: true,
-      });
-    } catch (e) {
-      toast.error("An error occurred while unrestricting the accounts");
-    }
-  };
-
-  const handleRestrict = async () => {
-    const ids = accounts.reduce((prev, curr) => {
-      if (curr.selected) prev.push(curr.id);
-      return prev;
-    }, [] as string[]);
-
-    try {
-      await mutate(axiosAuth.patch("admin/restrict-users", { ids }), {
-        optimisticData: {
-          accounts: accounts.map((a) =>
-            ids.includes(a.id) ? { ...a, restricted: true } : a
-          ),
-          accountCount: accountCount,
-        },
-        populateCache: false,
-        revalidate: false,
-        rollbackOnError: true,
-      });
-    } catch (e) {
-      toast.error("An error occurred while restricting the accounts");
-    }
-  };
-
-  const handleDelete = async () => {
-    const ids = accounts.reduce((prev, curr) => {
-      if (curr.selected) prev.push(curr.id);
-      return prev;
-    }, [] as string[]);
-
-    try {
-      await mutate(axiosAuth.patch("admin/delete-users", { ids }), {
-        optimisticData: {
-          accounts: accounts.filter((a) => !ids.includes(a.id)),
-          accountCount: accountCount - ids.length,
-        },
-        populateCache: false,
-        revalidate:
-          (page === 0 && allChecked && pages > 1) || (page !== 0 && allChecked),
-        rollbackOnError: true,
-      });
-
-      if (pages > 1 && allChecked) {
-        setPage((page) => (page === 0 ? page : page - 1));
-      }
-    } catch (e) {
-      toast.error("An error occurred while deleting the accounts");
+      toast.error("An error occurred while approving the accounts");
     }
   };
 
@@ -204,7 +94,7 @@ export default function Accounts(): ReactElement {
     if (error) {
       toast.error(
         error?.response?.data?.message ??
-          "An error occurred while fetching accounts"
+          "An error occurred while fetching pending student accounts"
       );
     }
   }, [data, error]);
@@ -213,22 +103,10 @@ export default function Accounts(): ReactElement {
     <>
       <VStack align="start" width="full">
         <HStack>
-          <Button
-            color="white"
-            size="sm"
-            px={8}
-            onClick={() => Router.push("/staff-accounts")}
-          >
-            Staff Accounts
+          <Button onClick={() => Router.back()}>
+            <Icon as={ArrowLeftIcon}></Icon>
           </Button>
-          <Button
-            color="white"
-            size="sm"
-            px={8}
-            onClick={() => Router.push("/pending-student-accounts")}
-          >
-            Pending Student Accounts
-          </Button>
+          <Text fontWeight="semibold">Pending Student Accounts</Text>
         </HStack>
         <TableContainer
           width="full"
@@ -273,9 +151,7 @@ export default function Accounts(): ReactElement {
                 <Th>Email</Th>
                 <Th>Name</Th>
                 <Th>Surname</Th>
-                <Th>Admin</Th>
                 <Th>Approved</Th>
-                <Th>Restricted</Th>
               </Tr>
             </Thead>
             <Tbody bgColor="bgPrimary">
@@ -319,24 +195,8 @@ export default function Accounts(): ReactElement {
                     <Td>{account.email}</Td>
                     <Td>{account.name}</Td>
                     <Td>{account.surname}</Td>
-                    <Td>{account.isAdmin.toString()}</Td>
                     <Td>
                       {account.approved ? (
-                        <CheckSquare
-                          size="20"
-                          weight="bold"
-                          color="var(--chakra-colors-green-500)"
-                        />
-                      ) : (
-                        <XSquare
-                          size="20"
-                          weight="bold"
-                          color="var(--chakra-colors-red-600)"
-                        />
-                      )}
-                    </Td>
-                    <Td>
-                      {account.restricted ? (
                         <CheckSquare
                           size="20"
                           weight="bold"
@@ -361,7 +221,7 @@ export default function Accounts(): ReactElement {
               <Text as="span" fontWeight="bold">
                 {accounts.length}
               </Text>{" "}
-              Accounts - {accounts.filter((a) => a.selected).length} of{" "}
+              Students - {accounts.filter((a) => a.selected).length} of{" "}
               {accounts.length} selected
             </Text>
             <ButtonGroup as={Wrap} size="sm" isDisabled={!anyChecked}>
@@ -370,47 +230,9 @@ export default function Accounts(): ReactElement {
                 colorScheme="green"
                 width="90px"
                 height="30px"
-                onClick={onAdminOpen}
+                onClick={onApproveOpen}
               >
-                Add Admin
-              </Button>
-              <Button
-                rounded="8px"
-                colorScheme="red"
-                width="120px"
-                height="30px"
-                onClick={onRemoveAdminOpen}
-              >
-                Remove Admin
-              </Button>
-              <Button
-                rounded="8px"
-                colorScheme="grey"
-                width="90px"
-                height="30px"
-                color="text"
-                onClick={onUnrestrictOpen}
-              >
-                Unrestrict
-              </Button>
-              <Button
-                rounded="8px"
-                colorScheme="grey"
-                width="90px"
-                height="30px"
-                color="text"
-                onClick={onRestrictOpen}
-              >
-                Restrict
-              </Button>
-              <Button
-                rounded="8px"
-                colorScheme="red"
-                width="90px"
-                height="30px"
-                onClick={onDeleteOpen}
-              >
-                Delete
+                Approve
               </Button>
             </ButtonGroup>
           </VStack>
@@ -446,59 +268,15 @@ export default function Accounts(): ReactElement {
         </HStack>
       </VStack>
       <Dialog
-        isOpen={isAdminOpen}
-        onClose={onAdminClose}
-        header="Add Admin"
-        message={`Are you sure you want to add admin for ${
+        isOpen={isApproveOpen}
+        onClose={onApproveClose}
+        header="Approve accounts"
+        message={`Are you sure you want to approve ${
           accounts.filter((a) => a.selected).length
         } account(s)?`}
         btnColor="green"
-        confirmationBtnTitle="Add Admin"
-        handleConfirmation={handleAddAdmin}
-      />
-      <Dialog
-        isOpen={isRemoveAdminOpen}
-        onClose={onRemoveAdminClose}
-        header="Add Admin"
-        message={`Are you sure you want to remove admin for ${
-          accounts.filter((a) => a.selected).length
-        } account(s)?`}
-        btnColor="red"
-        confirmationBtnTitle="Remove Admin"
-        handleConfirmation={handleRemoveAdmin}
-      />
-      <Dialog
-        isOpen={isUnrestrictOpen}
-        onClose={onUnrestrictClose}
-        header="Unrestrict accounts"
-        message={`Are you sure you want to unrestrict ${
-          accounts.filter((a) => a.selected).length
-        } account(s)?`}
-        btnColor="green"
-        confirmationBtnTitle="Unrestrict"
-        handleConfirmation={handleUnrestrict}
-      />
-      <Dialog
-        isOpen={isRestrictOpen}
-        onClose={onRestrictClose}
-        header="Restrict accounts"
-        message={`Are you sure you want to restrict ${
-          accounts.filter((a) => a.selected).length
-        } account(s)?`}
-        btnColor="yellow"
-        confirmationBtnTitle="Restrict"
-        handleConfirmation={handleRestrict}
-      />
-      <Dialog
-        isOpen={isDeleteOpen}
-        onClose={onDeleteClose}
-        header="Delete accounts"
-        message={`Are you sure you want to delete ${
-          accounts.filter((a) => a.selected).length
-        } account(s)?`}
-        btnColor="red"
-        confirmationBtnTitle="Delete"
-        handleConfirmation={handleDelete}
+        confirmationBtnTitle="Approve"
+        handleConfirmation={handleApprove}
       />
     </>
   );

@@ -99,7 +99,7 @@ function CafeteriaItem({
             {name}
           </Text>
 
-          {user?.isAdmin ? (
+          {user?.isAdmin || user?.isCafeteriaMan ? (
             <OptionsMenu>
               <MenuList>
                 <MenuItem onClick={onEditOpen}>
@@ -294,7 +294,7 @@ export default function Cafeteria(): ReactElement {
   return (
     <Flex gap="10">
       <VStack spacing={4} align="start" flex="7">
-        {user?.isAdmin ? (
+        {user?.isAdmin || user?.isCafeteriaMan ? (
           <VStack width="full" align="start" spacing={5}>
             <VStack width="full" align="start" spacing={5}>
               <Text fontSize="18px" fontWeight="semibold">

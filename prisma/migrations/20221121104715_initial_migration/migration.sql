@@ -16,6 +16,7 @@ CREATE TABLE "User" (
     "isClubMember" BOOLEAN NOT NULL DEFAULT false,
     "isAcademicCoordinator" BOOLEAN NOT NULL DEFAULT false,
     "isAcademicStaff" BOOLEAN NOT NULL DEFAULT false,
+    "isCafeteriaMan" BOOLEAN NOT NULL DEFAULT false,
     "isAdmin" BOOLEAN NOT NULL DEFAULT false,
     "resetPasswordToken" TEXT,
     "resetPasswordTokenExpiry" TIMESTAMP(3),
