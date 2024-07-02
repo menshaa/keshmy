@@ -47,7 +47,7 @@ export default function Group({
   const rejectGroupModel = useDisclosure();
 
   const onJoinGroup = (id: string) => {
-    if (!approved) {
+    if (!approved || isJoined) {
       return;
     }
     axiosAuth
@@ -111,7 +111,7 @@ export default function Group({
         justify="space-between"
         align="flex-end"
         onClick={() => {
-          if (!approved) {
+          if (!approved || !isJoined) {
             return;
           }
           Router.push(`/view-group/${id}`);

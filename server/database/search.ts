@@ -1,8 +1,12 @@
-import { Announcement, Article, Event, Job, User } from "@prisma/client";
+import { Announcement, Article, Event, Group, Job, User } from "@prisma/client";
 import { prisma } from "./client";
 
-export const searchUsers = async (query: string, page: number, limit = 20): Promise<User[]> => {
-    return await prisma.$queryRaw`
+export const searchUsers = async (
+  query: string,
+  page: number,
+  limit = 20
+): Promise<User[]> => {
+  return await prisma.$queryRaw`
     SELECT u.id, u.username, u."avatarURL",
     CASE WHEN s."showRealName" = true THEN CONCAT(u.name, ' ', u.surname) ELSE u.username END as name,
     s."allowAllDMs"
@@ -16,8 +20,12 @@ export const searchUsers = async (query: string, page: number, limit = 20): Prom
     ;`;
 };
 
-export const searchAnnouncements = async (query: string, page: number, limit = 20): Promise<Announcement[]> => {
-    return await prisma.$queryRaw`
+export const searchAnnouncements = async (
+  query: string,
+  page: number,
+  limit = 20
+): Promise<Announcement[]> => {
+  return await prisma.$queryRaw`
     SELECT id, title, "publishDate", left(content, 250) as content
     FROM "Announcement"
     WHERE approved = true AND title ILIKE ${`%${query}%`}
@@ -25,8 +33,12 @@ export const searchAnnouncements = async (query: string, page: number, limit = 2
     ;`;
 };
 
-export const searchArticles = async (query: string, page: number, limit = 20): Promise<Article[]> => {
-    return await prisma.$queryRaw`
+export const searchArticles = async (
+  query: string,
+  page: number,
+  limit = 20
+): Promise<Article[]> => {
+  return await prisma.$queryRaw`
     SELECT a.id, a.title, a."publishDate", left(a.content, 250) as content, author.username as "authorUsername",
     CASE WHEN s."showRealName" = true THEN CONCAT(author.name, ' ', author.surname) ELSE author.username END as "authorName"
     FROM "Article" a
@@ -41,8 +53,13 @@ export const searchArticles = async (query: string, page: number, limit = 20): P
     ;`;
 };
 
-export const searchEvents = async (query: string, userId: string, page: number, limit = 20): Promise<Event[]> => {
-    return await prisma.$queryRaw`
+export const searchEvents = async (
+  query: string,
+  userId: string,
+  page: number,
+  limit = 20
+): Promise<Event[]> => {
+  return await prisma.$queryRaw`
     SELECT id, title, time, location, "imageURL", description,
     COUNT(i."userId")::INTEGER as interest,
     EXISTS (SELECT "userId" FROM "EventInterest" WHERE "userId" = ${userId} AND "eventId" = id) as "isInterested"
@@ -56,11 +73,28 @@ export const searchEvents = async (query: string, userId: string, page: number, 
     ;`;
 };
 
-export const searchJobs = async (query: string, page: number, limit = 20): Promise<Job[]> => {
-    return await prisma.$queryRaw`
+export const searchJobs = async (
+  query: string,
+  page: number,
+  limit = 20
+): Promise<Job[]> => {
+  return await prisma.$queryRaw`
     SELECT id, title, company, location, type, link, description, "createdAt", salary
     FROM "Job"
     WHERE title ILIKE ${`%${query}%`} OR company ILIKE ${`%${query}%`} OR location ILIKE ${`%${query}%`}
+    LIMIT ${limit} OFFSET ${page * limit}
+    ;`;
+};
+
+export const searchGroups = async (
+  query: string,
+  page: number,
+  limit = 20
+): Promise<Group[]> => {
+  return await prisma.$queryRaw`
+    SELECT *
+    FROM "Group"
+    WHERE name ILIKE ${`%${query}%`} OR description ILIKE ${`%${query}%`}
     LIMIT ${limit} OFFSET ${page * limit}
     ;`;
 };

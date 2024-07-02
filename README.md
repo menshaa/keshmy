@@ -38,3 +38,10 @@ Password: admin_user
 Email: test_user@gmail.com
 Password: test_user
 ```
+
+## Updating Schema
+
+- Make changes to migrations file (if required)
+- Add changes to `schema.prisma`
+- Run `npx prisma generate`
+- Re-run migrations

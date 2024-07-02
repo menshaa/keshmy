@@ -19,6 +19,12 @@ import {
   getGroupMemberRecordDB,
   getGroupMembersDB,
   getGroupAdmins,
+  getOtherAdminsInGroupDB,
+  deleteGroupMemberRecordDB,
+  updateGroupCreatorDB,
+  addToWhiteListDB,
+  removeFromWhiteListDB,
+  findWhiteListDB,
 } from "../database/groups";
 import { DatabaseError } from "../database/utils";
 
@@ -200,18 +206,21 @@ export async function getGroupMembers(req: Request, res: Response) {
     approvedStatus
   );
 
-  const members = groupMemberRecords.map((record: any) => {
-    return {
-      ...record.user,
-      isGroupAdmin: record.isAdmin,
-    };
-  });
-
   const group = await getGroupByIdDB(groupId);
   if (!group) {
     return res.status(404).json({ message: "Group not found." });
   }
-  members.unshift(group.creator);
+
+  const members = await Promise.all(
+    groupMemberRecords.map(async (record: any) => {
+      return {
+        ...record.user,
+        isGroupAdmin: record.isAdmin,
+        isWhiteListed: !!(await findWhiteListDB(groupId, record.userId)),
+      };
+    })
+  );
+  members.unshift({ ...group.creator, isWhiteListed: true });
 
   return res.status(200).json({
     message: "Successfully fetched members",
@@ -222,6 +231,7 @@ export async function getGroupMembers(req: Request, res: Response) {
         avatarURL: m.avatarURL,
         name: m.name,
         isGroupAdmin: group.creatorId === m.id || m.isGroupAdmin === true,
+        isWhiteListed: m.isWhiteListed,
       };
     }),
   });
@@ -252,4 +262,78 @@ export async function updateUserJoinRequest(req: Request, res: Response) {
   return res
     .status(201)
     .json({ message: "Successfully updated user group request" });
+}
+
+export async function leaveGroup(req: Request, res: Response) {
+  const userId = req.session.user.id;
+  const groupId = req.params.groupId;
+  const targetGroup = await getGroupByIdDB(groupId);
+  if (!targetGroup) {
+    return res.status(404).json({ message: "Group not found." });
+  }
+
+  const otherAdmins = await getOtherAdminsInGroupDB(userId, groupId);
+  if (!otherAdmins || !otherAdmins?.length) {
+    return res.status(400).json({
+      message:
+        "Please ensure you have assigned an admin before you leave the group",
+    });
+  }
+
+  const newCreatorId = otherAdmins[0].userId;
+  const newCreatorGroupMemberRecordId = otherAdmins[0].id;
+
+  const groupMemberRecord = await getGroupMemberRecordDB(groupId, userId);
+  if (groupMemberRecord) {
+    await deleteGroupMemberRecordDB(groupMemberRecord.id);
+  } else {
+    await updateGroupCreatorDB(groupId, newCreatorId);
+    await deleteGroupMemberRecordDB(newCreatorGroupMemberRecordId);
+  }
+
+  return res.status(201).json({ message: "Group left successfully" });
+}
+
+export async function addToWhiteList(req: Request, res: Response) {
+  const userId = req.session.user.id;
+  const { groupId, userId: targetMemberId } = req.params;
+
+  const targetGroup = await getGroupByIdDB(groupId);
+  if (!targetGroup) {
+    return res.status(404).json({ message: "Group not found." });
+  }
+
+  const groupMemberRecord = await getGroupMemberRecordDB(groupId, userId);
+  if (targetGroup.creatorId !== userId && !groupMemberRecord) {
+    return res.status(401).json({ message: "Unauthorized." });
+  }
+  const id = snowflake.getUniqueID();
+  await addToWhiteListDB(id.toString(), groupId, targetMemberId);
+
+  return res
+    .status(201)
+    .json({ message: "Member added to whitelist successfully" });
+}
+
+export async function removeFromWhiteList(req: Request, res: Response) {
+  const userId = req.session.user.id;
+  const { groupId, userId: targetMemberId } = req.params;
+
+  const targetGroup = await getGroupByIdDB(groupId);
+  if (!targetGroup) {
+    return res.status(404).json({ message: "Group not found." });
+  }
+
+  const groupMemberRecord = await getGroupMemberRecordDB(groupId, userId);
+  if (targetGroup.creatorId !== userId && !groupMemberRecord) {
+    return res.status(401).json({ message: "Unauthorized." });
+  }
+  const whiteListRecord = await findWhiteListDB(groupId, targetMemberId);
+  if (whiteListRecord) {
+    await removeFromWhiteListDB(whiteListRecord.id);
+  }
+
+  return res
+    .status(201)
+    .json({ message: "Member removed from whitelist successfully" });
 }

@@ -40,6 +40,7 @@ interface AddGroupAdminModalProps {
   loggedInUserId: string | undefined;
   isLoggedInUserGroupAdmin: boolean;
   mutate: KeyedMutator<GetClubMembersRes[]>;
+  isWhiteListed: boolean | undefined;
 }
 
 export default function AddGroupAdminModal({
@@ -53,8 +54,10 @@ export default function AddGroupAdminModal({
   loggedInUserId,
   isLoggedInUserGroupAdmin,
   mutate,
+  isWhiteListed,
 }: AddGroupAdminModalProps): ReactElement {
   const [isSubmitting, setSubmitting] = useState(false);
+  const [isWhitelistSubmitting, setWhitelistSubmitting] = useState(false);
 
   const handleSubmit = () => {
     setSubmitting(true);
@@ -80,6 +83,50 @@ export default function AddGroupAdminModal({
         );
         setSubmitting(false);
       });
+  };
+
+  const handleWhitelist = () => {
+    setWhitelistSubmitting(true);
+
+    if (!isWhiteListed) {
+      axiosAuth
+        .post<GenericBackendRes>(
+          `groups/${groupId}/member/${userId}/white-list`
+        )
+        .then(async (res) => {
+          toast.success(res.data.message);
+          setWhitelistSubmitting(false);
+          if (mutate) {
+            await mutate();
+          }
+        })
+        .catch((e: AxiosError<GenericBackendRes>) => {
+          toast.error(
+            e.response?.data?.message ??
+              "An error occurred while submitting the event"
+          );
+          setWhitelistSubmitting(false);
+        });
+    } else {
+      axiosAuth
+        .delete<GenericBackendRes>(
+          `groups/${groupId}/member/${userId}/white-list`
+        )
+        .then(async (res) => {
+          toast.success(res.data.message);
+          setWhitelistSubmitting(false);
+          if (mutate) {
+            await mutate();
+          }
+        })
+        .catch((e: AxiosError<GenericBackendRes>) => {
+          toast.error(
+            e.response?.data?.message ??
+              "An error occurred while submitting the event"
+          );
+          setWhitelistSubmitting(false);
+        });
+    }
   };
 
   useEffect(() => {}, []);
@@ -117,6 +164,16 @@ export default function AddGroupAdminModal({
                 onClick={handleSubmit}
               >
                 {!isGroupAdmin ? "Make Admin" : "Remove Admin"}
+              </Button>
+            ) : null}
+            {loggedInUserId !== userId && isLoggedInUserGroupAdmin ? (
+              <Button
+                colorScheme="green"
+                isLoading={isWhitelistSubmitting}
+                loadingText="Submitting"
+                onClick={handleWhitelist}
+              >
+                {!isWhiteListed ? "Add to whitelist" : "Remove from whitelist"}
               </Button>
             ) : null}
           </HStack>

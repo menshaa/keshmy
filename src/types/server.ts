@@ -114,12 +114,17 @@ export interface SearchJobsRes extends GenericBackendRes {
   jobs: IJob[];
 }
 
+export interface SearchGroupsRes extends GenericBackendRes {
+  groups: IGroup[];
+}
+
 export interface SearchAllRes extends GenericBackendRes {
   users: ISearchUser[];
   announcements: ISearchAnnouncement[];
   articles: ISearchArticle[];
   events: IEvent[];
   jobs: IJob[];
+  groups: IGroup[];
 }
 
 export interface GetJobsRes extends GenericBackendRes {

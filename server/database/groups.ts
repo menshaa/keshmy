@@ -207,3 +207,78 @@ export const getGroupAdmins = async (groupId: string) => {
 
   return [...adminMembers.map((member) => member.userId), group?.creatorId];
 };
+
+export const deleteGroupMemberRecordDB = async (id: string) => {
+  try {
+    await prisma.groupMembers.delete({
+      where: {
+        id,
+      },
+    });
+  } catch (e) {
+    console.error(e);
+    return DatabaseError.UNKNOWN;
+  }
+
+  return DatabaseError.SUCCESS;
+};
+
+export const getOtherAdminsInGroupDB = async (
+  userId: string,
+  groupId: string
+) => {
+  return prisma.groupMembers.findMany({
+    where: {
+      groupId,
+      isAdmin: true,
+      userId: {
+        not: userId,
+      },
+    },
+  });
+};
+
+export const updateGroupCreatorDB = async (
+  groupId: string,
+  newCreatorId: string
+) => {
+  return prisma.group.update({
+    where: {
+      id: groupId,
+    },
+    data: {
+      creatorId: newCreatorId,
+    },
+  });
+};
+
+export const addToWhiteListDB = async (
+  id: string,
+  groupId: string,
+  userId: string
+) => {
+  return prisma.groupWhiteList.create({
+    data: {
+      id,
+      groupId,
+      userId,
+    },
+  });
+};
+
+export const findWhiteListDB = async (groupId: string, userId: string) => {
+  return prisma.groupWhiteList.findFirst({
+    where: {
+      groupId,
+      userId,
+    },
+  });
+};
+
+export const removeFromWhiteListDB = async (id: string) => {
+  return prisma.groupWhiteList.delete({
+    where: {
+      id,
+    },
+  });
+};

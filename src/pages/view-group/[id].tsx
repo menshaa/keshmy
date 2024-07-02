@@ -45,6 +45,7 @@ interface MemberProps {
   loggedInUserId: string | undefined;
   isLoggedInUserGroupAdmin: boolean;
   mutate: KeyedMutator<GetClubMembersRes[]>;
+  isWhiteListed: boolean | undefined;
 }
 
 function Member({
@@ -57,6 +58,7 @@ function Member({
   loggedInUserId,
   isLoggedInUserGroupAdmin,
   mutate,
+  isWhiteListed,
 }: MemberProps): ReactElement {
   const addGroupAdminModal = useDisclosure();
   return (
@@ -83,6 +85,7 @@ function Member({
         isGroupAdmin={isGroupAdmin}
         isLoggedInUserGroupAdmin={isLoggedInUserGroupAdmin}
         mutate={mutate}
+        isWhiteListed={isWhiteListed}
       />
     </div>
   );
@@ -225,6 +228,7 @@ function Members({
                 loggedInUserId={loggedInUserId}
                 isLoggedInUserGroupAdmin={isLoggedInUserGroupAdmin}
                 mutate={mutate}
+                isWhiteListed={member.isWhiteListed}
               />
             )}
           />
@@ -351,6 +355,21 @@ export default function ViewGroup(): ReactElement {
     return `posts/get-all-posts/${pageIndex}?groupId=${id}`;
   };
 
+  const onLeaveGroup = (id: string) => {
+    axiosAuth
+      .post<GenericBackendRes>(`groups/${id}/leave-group`)
+      .then(async (res) => {
+        toast.success(res.data.message);
+        router.back();
+      })
+      .catch((e: AxiosError<GenericBackendRes>) => {
+        toast.error(
+          e.response?.data?.message ??
+            "An error occurred while submitting the event"
+        );
+      });
+  };
+
   const createPostRoute = `posts/create-post?groupId=${id}`;
   const swr = useSWRInfinite<GetFeedRes, AxiosError<GenericBackendRes>>(
     getPosts,
@@ -382,6 +401,9 @@ export default function ViewGroup(): ReactElement {
       <VStack spacing={4} align="start" flex="7">
         <HStack>
           <Button onClick={() => router.back()}>Back</Button>
+          <Button color="red" onClick={() => onLeaveGroup(id)}>
+            Leave
+          </Button>
           {groupAdmins.includes(loggedInUser?.id) ? (
             <Button onClick={() => router.push(`/group-post-requests/${id}`)}>
               Post Requests

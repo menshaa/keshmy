@@ -10,7 +10,10 @@ import {
   updateUserAdminStatus,
   getGroupMembers,
   getGroupPendingMembers,
-  updateUserJoinRequest
+  updateUserJoinRequest,
+  leaveGroup,
+  addToWhiteList,
+  removeFromWhiteList,
 } from "../controllers/groups";
 import { sessionGuard, adminGuard } from "../controllers/utils/middleware";
 const router = express.Router();
@@ -28,7 +31,22 @@ router.patch(
   updateUserAdminStatus
 );
 router.get("/:groupId/pending-members", sessionGuard, getGroupPendingMembers);
-router.patch("/:groupId/member/:userId/join-request", sessionGuard, updateUserJoinRequest);
+router.patch(
+  "/:groupId/member/:userId/join-request",
+  sessionGuard,
+  updateUserJoinRequest
+);
 router.get("/:groupId/members", sessionGuard, getGroupMembers);
+router.post("/:groupId/leave-group", sessionGuard, leaveGroup);
+router.post(
+  "/:groupId/member/:userId/white-list",
+  sessionGuard,
+  addToWhiteList
+);
+router.delete(
+  "/:groupId/member/:userId/white-list",
+  sessionGuard,
+  removeFromWhiteList
+);
 
 export default router;

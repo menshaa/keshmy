@@ -63,6 +63,7 @@ CREATE TABLE "Announcement" (
     "approved" BOOLEAN NOT NULL DEFAULT false,
     "title" TEXT NOT NULL,
     "content" TEXT NOT NULL,
+    "imageURL" TEXT,
     "publishDate" TIMESTAMP(3),
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -174,6 +175,13 @@ CREATE TABLE "GroupMembers" (
     "isAdmin" BOOLEAN NOT NULL DEFAULT false,
     "approved" BOOLEAN NULL,
     CONSTRAINT "GroupMembers_pkey" PRIMARY KEY ("id")
+);
+
+CREATE TABLE "GroupWhiteList" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "groupId" TEXT NOT NULL,
+    CONSTRAINT "GroupWhiteList_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex

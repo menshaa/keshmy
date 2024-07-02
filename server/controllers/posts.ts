@@ -26,7 +26,11 @@ import { GetPagedData } from "../validators/general";
 import fs from "fs/promises";
 import { snowflake } from "../database/snowflake";
 import { traversalSafeRm } from "../utils";
-import { getGroupByIdDB, getGroupMemberRecordDB } from "../database/groups";
+import {
+  findWhiteListDB,
+  getGroupByIdDB,
+  getGroupMemberRecordDB,
+} from "../database/groups";
 
 export async function getUserPosts(req: Request, res: Response) {
   const data = GetPostsData.safeParse(req.params);
@@ -134,18 +138,19 @@ export async function createPost(req: Request, res: Response) {
   }
 
   /**
-   * The following logic ensures that group admins' posts will immediately be approved
+   * The following logic ensures that group admins' AND whitelisted members' posts will immediately be approved
    */
   let approved = undefined;
+  const userId = req.session.user.id;
   if (groupId) {
     const targetGroup = await getGroupByIdDB(groupId.toString());
     if (!targetGroup) {
       return res.status(404).json({ message: "Group not found" });
     }
-    if (targetGroup.creatorId !== req.session.user.id) {
+    if (targetGroup.creatorId !== userId) {
       const targetGroupMemberRecord = await getGroupMemberRecordDB(
         groupId.toString(),
-        req.session.user.id
+        userId
       );
       if (!targetGroupMemberRecord) {
         return res
@@ -154,6 +159,10 @@ export async function createPost(req: Request, res: Response) {
       }
 
       if (targetGroupMemberRecord.isAdmin) {
+        approved = true;
+      }
+      const whiteListRecord = await findWhiteListDB(groupId.toString(), userId);
+      if (whiteListRecord) {
         approved = true;
       }
     } else {

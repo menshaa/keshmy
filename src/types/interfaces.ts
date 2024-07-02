@@ -39,6 +39,7 @@ export interface IClubMember {
   username: string;
   avatarURL: string | null;
   isGroupAdmin?: boolean;
+  isWhiteListed?: boolean;
 }
 
 export interface IEvent {
@@ -81,6 +82,7 @@ export interface IAnnouncement {
   publishDate?: string;
   createdAt: string;
   approved?: boolean;
+  imageURL?: string;
 }
 
 export interface ISearchAnnouncement {
@@ -151,7 +153,7 @@ export interface IPost {
   type: PostType;
   createdAt: string;
   groupName: string | null;
-  author?: IUser
+  author?: IUser;
 }
 
 export interface IPostAuthor {

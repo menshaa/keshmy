@@ -51,6 +51,7 @@ model User {
   likes          PostLike[]
   createdGroups  Group[]
   joinedGroups   GroupMembers[]
+  groupWhiteList GroupWhiteList[]
 }
 
 model UserSettings {
@@ -102,6 +103,7 @@ model Announcement {
   approved    Boolean   @default(false)
   title       String
   content     String
+  imageURL    String?
   publishDate DateTime?
   createdAt   DateTime  @default(now())
 }
@@ -191,6 +193,7 @@ model Group {
   creatorId    String
   createdAt    DateTime       @default(now())
   groupMembers GroupMembers[]
+  groupWhiteList GroupWhiteList[]
   posts        Post[]
 }
 
@@ -202,4 +205,14 @@ model GroupMembers {
   groupId  String
   approved Boolean?
   isAdmin  Boolean @default(false)
+  @@unique([userId, groupId])
+}
+
+model GroupWhiteList {
+  id       String @id
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  group    Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId  String
+  @@unique([userId, groupId])
 }
