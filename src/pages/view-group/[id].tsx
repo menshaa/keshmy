@@ -355,7 +355,7 @@ export default function ViewGroup(): ReactElement {
     return `posts/get-all-posts/${pageIndex}?groupId=${id}`;
   };
 
-  const onLeaveGroup = (id: string) => {
+  const onLeaveGroup = (id: string | string[] | undefined) => {
     axiosAuth
       .post<GenericBackendRes>(`groups/${id}/leave-group`)
       .then(async (res) => {
@@ -404,7 +404,7 @@ export default function ViewGroup(): ReactElement {
           <Button color="red" onClick={() => onLeaveGroup(id)}>
             Leave
           </Button>
-          {groupAdmins.includes(loggedInUser?.id) ? (
+          {loggedInUser?.id && groupAdmins.includes(loggedInUser.id) ? (
             <Button onClick={() => router.push(`/group-post-requests/${id}`)}>
               Post Requests
             </Button>

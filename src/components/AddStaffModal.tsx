@@ -54,7 +54,9 @@ export default function AddStaffModal({
   });
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const name = e.target.name;
     const value = e.target.value;
