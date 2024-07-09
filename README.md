@@ -24,7 +24,7 @@
 - Run `docker-compose build` to build the image
 - Run `docker-compose up -d` to start the container
 - Run `docker-compose exec app npm run migrate` to run migrations. If prompted to enter a name for a new migration, exit by pressing `esc`
-- Run `docker-compose exec app` to seed default admin user to the database.
+- Run `docker-compose exec app npm run seed` to seed default admin user to the database.
 - Navigate to `http://localhost:3000` to view the application
 - You can login as an admin using these credentials
 
