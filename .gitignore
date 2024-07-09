@@ -49,8 +49,6 @@ dist/
 # cdn
 server/cdn
 
-package-lock.json
-
 # Seed files (JS)
 seed.js
 articleData.js
