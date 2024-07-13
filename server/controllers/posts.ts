@@ -193,6 +193,23 @@ export async function createPost(req: Request, res: Response) {
   return res.status(201).json({ message: "Successfully created post" });
 }
 
+export async function editPost(req: Request, res: Response) {
+  const loggedInUserId = req.session.user.id;
+  const postId = req.params.postId;
+  const updatedContent = req.body.content;
+  const targetPost = await getPostByIdDB(postId);
+  if (!targetPost) {
+    return res.status(404).json({ message: "Post not found" });
+  }
+
+  if (targetPost.authorId !== loggedInUserId) {
+    return res.status(404).json({ message: "Post not found" });
+  }
+
+  await updatePostDB(postId, { content: updatedContent });
+  return res.status(201).json({ message: "Successfully updated post" });
+}
+
 export async function deletePost(req: Request, res: Response) {
   const data = DeletePostData.safeParse(req.query);
 

@@ -23,6 +23,8 @@ import {
   Textarea,
   LinkBox,
   LinkOverlay,
+  ModalHeader,
+  ModalCloseButton,
 } from "@chakra-ui/react";
 import { TrashIcon } from "@heroicons/react/solid";
 import { Camera, Chat, NotePencil, ThumbsUp } from "phosphor-react";
@@ -53,6 +55,7 @@ import {
 } from "src/utils/constants";
 import { PostType } from "@prisma/client";
 import { useRouter } from "next/router";
+import { PencilIcon } from "@heroicons/react/outline";
 
 interface CommentModalProps {
   isOpen: boolean;
@@ -394,6 +397,7 @@ interface PostProps {
 
 interface OptionsProps {
   openDeleteDialog: () => void;
+  openEditModal: () => void;
 }
 
 interface DeleteDialogProps {
@@ -406,10 +410,17 @@ interface DeleteDialogProps {
     | KeyedMutator<GetCommentsRes[]>;
 }
 
-function Options({ openDeleteDialog }: OptionsProps): ReactElement {
+function Options({
+  openDeleteDialog,
+  openEditModal,
+}: OptionsProps): ReactElement {
   return (
     <OptionsMenu buttonSize="34px">
       <MenuList>
+        <MenuItem onClick={openEditModal}>
+          <Icon mr={3} as={PencilIcon} h="24px" w="24px" />
+          <span>Edit Post</span>
+        </MenuItem>
         <MenuItem color="red.500" onClick={openDeleteDialog}>
           <Icon mr={3} as={TrashIcon} h="24px" w="24px" />
           <span>Delete Post</span>
@@ -453,6 +464,92 @@ function DeleteDialog({
   );
 }
 
+function EditModal({
+  isOpen,
+  onClose,
+  post,
+  mutate,
+}: CommentModalProps): ReactElement {
+  const [isSubmitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    content: post.content,
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const name = e.target.name;
+    const value = e.target.value;
+    setForm({
+      ...form,
+      [name]: value,
+    });
+  };
+
+  const handleSubmit = () => {
+    if (!form.content) {
+      toast.error("All fields must be filled");
+      return;
+    }
+
+    setSubmitting(true);
+
+    const payload = {
+      content: form.content,
+    };
+    axiosAuth
+      .patch<GenericBackendRes>(`posts/${post.id}`, payload)
+      .then(async (res) => {
+        toast.success(res.data.message);
+        setSubmitting(false);
+        if (mutate) {
+          await mutate();
+        }
+        onClose();
+      })
+      .catch((e: AxiosError<GenericBackendRes>) => {
+        toast.error(
+          e.response?.data?.message ??
+            "An error occurred while submitting the post"
+        );
+        setSubmitting(false);
+      });
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size="xl" scrollBehavior="inside">
+      <ModalOverlay />
+      <ModalContent bgColor="bgMain">
+        <ModalHeader>
+          <Text>Edit a Post</Text>
+        </ModalHeader>
+        <ModalCloseButton size="lg" />
+        <ModalBody>
+          <VStack width="full" align="end" spacing={5}>
+            <VStack width="full" spacing={3}>
+              <Textarea
+                defaultValue={post.content}
+                placeholder="Content"
+                name="content"
+                onChange={handleChange}
+                rows={3}
+              />
+            </VStack>
+            <Button
+              colorScheme="green"
+              isLoading={isSubmitting}
+              loadingText={"Submitting"}
+              onClick={handleSubmit}
+            >
+              Edit
+            </Button>
+          </VStack>
+        </ModalBody>
+      </ModalContent>
+    </Modal>
+  );
+}
+
 export default function Post(props: PostProps): ReactElement {
   const { user } = useUserContext();
   const {
@@ -464,6 +561,12 @@ export default function Post(props: PostProps): ReactElement {
     isOpen: isCommentModalOpen,
     onOpen: onOpenCommentModal,
     onClose: onCloseCommentModal,
+  } = useDisclosure();
+
+  const {
+    isOpen: isEditModalOpen,
+    onOpen: onOpenEditModal,
+    onClose: onCloseEditModal,
   } = useDisclosure();
   const commentBtnColor = useColorModeValue("button", "gray");
   const likeBtnColor = useColorModeValue("accent", "accent");
@@ -560,7 +663,10 @@ export default function Post(props: PostProps): ReactElement {
             </GridItem>
             {props.author.id === user?.id ? (
               <GridItem zIndex={1}>
-                <Options openDeleteDialog={onOpenDeleteDialog} />
+                <Options
+                  openDeleteDialog={onOpenDeleteDialog}
+                  openEditModal={onOpenEditModal}
+                />
               </GridItem>
             ) : null}
             <GridItem colStart={2}>
@@ -617,6 +723,12 @@ export default function Post(props: PostProps): ReactElement {
       <CommentModal
         isOpen={isCommentModalOpen}
         onClose={onCloseCommentModal}
+        post={props}
+        mutate={props.mutate}
+      />
+      <EditModal
+        isOpen={isEditModalOpen}
+        onClose={onCloseEditModal}
         post={props}
         mutate={props.mutate}
       />
